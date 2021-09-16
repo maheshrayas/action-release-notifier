@@ -1,0 +1,15 @@
+name: 'Create GH Issue when upstream releases new version'
+description: 'Create GH Issue when upstream releases new version'
+author: 'Mahesh Rayas'
+inputs:
+  github_token:
+    description: 'GITHUB_TOKEN.'
+  repo:
+    description: 'pass github repository'
+
+runs:
+  using: 'docker'
+  image: 'docker://maheshrayas/release-notifier:1.0'
+branding:
+  icon: 'zoom-in'
+  color: 'purple'
