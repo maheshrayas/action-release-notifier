@@ -6,6 +6,8 @@ inputs:
     description: 'GITHUB_TOKEN.'
   repo:
     description: 'pass github repository'
+  days:
+    description: 'frequency of scan (must match the cron scheduler)'
 
 runs:
   using: 'docker'
