@@ -1,12 +1,17 @@
-# action-release-notifier
 
-action-release-notifier is a github action which is used to notify whenever there is a new upstream github repo releases.
+<h1 align="center">
+  <p align="center">action-release-notifier</p>
+</h1>
+
+<div align="center">
+  <a href="https://github.com/maheshrayas/action-release-notifier/actions" alt="Build"><img src="https://github.com/maheshrayas/action-release-notifier/workflows/build/badge.svg" /></a>
+  <a href="https://github.com/maheshrayas/action-release-notifier/actions/workflows/lint.yaml" alt="Lint"><img src="https://github.com/maheshrayas/action-release-notifier/actions/workflows/lint.yaml/badge.svg" /></a>
+  <a href="https://github.com/maheshrayas/action-release-notifier/commits/main" alt="last commit"><img src="https://img.shields.io/github/last-commit/maheshrayas/action-release-notifier?color=purple" /></a>
+</div>
 
 ## Motivation
 
 Since most of applications these days rely on upstream opensource Github Projects, we needed a way to get notificed when a new release of upstream was done and easily configured to any number of github projects using Github Actions.
-
-## Build status
 
 ## Configuration in GHA workflow
 

@@ -1,4 +1,4 @@
-name: build
+name: lint
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ on:
   workflow_dispatch: null
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -23,9 +23,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-      - name: test
-        env: 
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses: actions-rs/cargo@v1
+      - name: lint
+        uses: actions-rs/clippy-check@v1
         with:
-          command: test
+          token: ${{ secrets.GITHUB_TOKEN }}

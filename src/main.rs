@@ -7,7 +7,6 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
-use std::time::Instant;
 
 #[derive(Deserialize, Debug, Default)]
 struct Release {
@@ -201,6 +200,7 @@ fn get_repo_details(repo: &str) -> Result<Captures, String> {
 
 #[tokio::test]
 async fn test_main() {
+    use std::time::Instant;
     let start = Instant::now();
     let gh_token = &env::var("TOKEN").unwrap();
     env::set_var("INPUT_REPO", "https://github.com/maheshrayas/action-release-notifier,https://github.com/maheshrayas/action-pr-comment-delete");
