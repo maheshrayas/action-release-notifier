@@ -5,12 +5,10 @@ on:
     branches:
       - main
     paths:
-      - 'src/'
+      - 'src/**'
   push:
     branches:
       - main
-    paths:
-      - 'src/'
   workflow_dispatch: null
 
 jobs:
@@ -26,6 +24,8 @@ jobs:
         with:
           command: build
       - name: test
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: actions-rs/cargo@v1
         with:
           command: test

@@ -202,10 +202,10 @@ fn get_repo_details(repo: &str) -> Result<Captures, String> {
 #[tokio::test]
 async fn test_main() {
     let start = Instant::now();
-    let gh_token = &env::var("secrets.GITHUB_TOKEN").unwrap();
-    env::set_var("INPUT_REPO", "https://github.com/jetstack/cert-manager,https://github.com/jetstack/google-cas-issuer,https://github.com/cert-manager/istio-csr,https://github.com/kubernetes-sigs/secrets-store-csi-driver");
-    env::set_var("INPUT_DAYS", "7");
-    env::set_var("GITHUB_REPOSITORY", "maheshrayas/sample");
+    let gh_token = &env::var("TOKEN").unwrap();
+    env::set_var("INPUT_REPO", "https://github.com/maheshrayas/action-release-notifier,https://github.com/maheshrayas/action-pr-comment-delete");
+    env::set_var("INPUT_DAYS", "1");
+    env::set_var("GITHUB_REPOSITORY", "maheshrayas/action-release-notifier");
 
     env::set_var("INPUT_GITHUB_TOKEN", gh_token);
     if let Err(_) = process().await {
