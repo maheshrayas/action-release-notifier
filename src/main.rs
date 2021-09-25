@@ -4,21 +4,24 @@ use regex::{Captures, Regex};
 use reqwest::header::HeaderMap;
 use reqwest::{Client, Response};
 use serde::Deserialize;
-
 use std::collections::HashMap;
+use std::env;
 use std::sync::Arc;
 use std::time::Instant;
-use std::{env};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Default)]
 struct Release {
-    name: String,
     tag_name: String,
     published_at: String,
     body: String,
     html_url: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct Output {
+    repo_name: String,
+    release: Option<Release>,
+}
 #[tokio::main]
 async fn main() -> Result<()> {
     process().await?;
@@ -36,9 +39,7 @@ async fn process() -> Result<(), reqwest::Error> {
         env::var("INPUT_GITHUB_TOKEN").expect("Missing input parameter: github_token")
     );
 
-    // convert comma seperate repos to vector
-    let repo_list: Vec<&str> = repo.split(',').collect();
-    let repo_list_string: Vec<String> = repo_list.iter().map(|s| s.to_string()).collect();
+    let repo_list_string = repo.split(',').into_iter().map(|s| s.to_string());
     let mut headers = HeaderMap::new();
     headers.insert("Authorization", token.parse().unwrap());
     headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
@@ -47,8 +48,7 @@ async fn process() -> Result<(), reqwest::Error> {
         .into_iter()
         .map(|repo| {
             let mut headers_clone = headers.to_owned();
-            let arc_client = Arc::new(reqwest::Client::new());
-            let client = arc_client.clone();
+            let client = Arc::new(reqwest::Client::new());
             tokio::spawn(async move {
                 let m = match get_repo_details(&repo) {
                     Ok(cap) => Some(cap),
@@ -57,8 +57,12 @@ async fn process() -> Result<(), reqwest::Error> {
                         None
                     }
                 };
-
-                //TODO check if None and return back
+                if m.is_none() {
+                    return Output {
+                        repo_name: repo,
+                        release: None,
+                    };
+                }
                 let final_org = m.unwrap();
                 let (parsed_org, parsed_repo) = (&final_org[1], &final_org[2]);
 
@@ -67,42 +71,71 @@ async fn process() -> Result<(), reqwest::Error> {
                     "https://api.github.com/repos/{}/{}/releases/latest",
                     &parsed_org, &parsed_repo
                 );
-                let res = client
+                let resp = client
                     .get(&url)
                     .headers(headers_clone.to_owned())
                     .send()
                     .await;
-                let response = res.unwrap();
-                println!("val {}", response.status());
-                if response.status() == 200 {
-                    let body = response.json::<Release>().await;
-                    let get_response = body.unwrap();
-                    if get_response.check_new_release(days) {
-                        let issue_response = get_response.create_issue(client, headers_clone).await;
-                        let output = match issue_response {
-                            Ok(val) => {
-                                println!("val {}", val.status());
-                                Some(val)
+                match resp {
+                    Ok(res) => {
+                        if res.status() == 200 {
+                            let body = res.json::<Release>().await;
+                            let get_response = body.unwrap();
+                            if get_response.check_new_release(days) {
+                                let issue_response = get_response
+                                    .create_issue(client, headers_clone, parsed_repo)
+                                    .await;
+                                let _ = match issue_response {
+                                    Ok(val) => {
+                                        if val.status() == 201 {
+                                            return Output {
+                                                repo_name: parsed_repo.to_string(),
+                                                release: Some(get_response),
+                                            };
+                                        } else {
+                                            println!(
+                                                "Failed to create GH issue for {} status code {:?}",
+                                                parsed_repo,
+                                                val.error_for_status()
+                                            );
+                                        }
+                                    }
+                                    Err(err) => {
+                                        println!("Failed to create GH issue for {}", err);
+                                    }
+                                };
+                            } else {
+                                println!(
+                                    "No latest release found for {:?} in past {} day(s)",
+                                    parsed_repo, days,
+                                );
                             }
-                            Err(_) => None,
-                        };
-                        if let None = output {
-                            return "Failed to create issue".to_string();
+                        } else {
+                            println!(
+                                "Failed to get latest release info {} status code {:?}",
+                                parsed_repo,
+                                &res.error_for_status()
+                            );
                         }
-                        return get_response.body;
-                        // TODO check the status code and accordingly fill the details and return the struct
                     }
+                    Err(_) => todo!(),
                 }
-                return "No new releases found".to_string();
+                Output {
+                    repo_name: parsed_repo.to_string(),
+                    release: None,
+                }
             })
         })
         .collect();
-    let mut items: Vec<String> = vec![];
+    let mut items: Vec<Output> = vec![];
     for task in tasks {
         items.push(task.await.unwrap());
     }
     for item in &items {
-        println!("hi {}", *item);
+        if let Some(val) = &item.release {
+            println!("GH Issue created for {}", &item.repo_name);
+            println!("{}", &val.body);
+        }
     }
     Ok(())
 }
@@ -124,6 +157,7 @@ impl Release {
         &self,
         client: Arc<Client>,
         headers: HeaderMap,
+        repo_name: &str,
     ) -> Result<Response, reqwest::Error> {
         let mut map = HashMap::new();
         let github_org: &str =
@@ -131,13 +165,13 @@ impl Release {
         let current_repo: Vec<&str> = github_org.split('/').collect();
         map.insert(
             "title",
-            format!("New version of {} {} available", &self.name, &self.tag_name),
+            format!("New version of {} {} available", &repo_name, &self.tag_name),
         );
         map.insert(
             "body",
             format!(
                 " Upstream new release {} available at {}",
-                &self.name, &self.html_url
+                &repo_name, &self.html_url
             ),
         );
         let url = format!(
@@ -151,9 +185,9 @@ impl Release {
 fn get_repo_details(repo: &str) -> Result<Captures, String> {
     let m = match Regex::new(r"https://github.com/([\S]+)/([\S]+)") {
         Ok(value) => {
-            match value.is_match(&repo) {
+            match value.is_match(repo) {
                 true => {
-                    let m = value.captures(&repo).unwrap();
+                    let m = value.captures(repo).unwrap();
                     //println!("{:?}",&m);
                     Ok(m)
                 }
@@ -168,17 +202,17 @@ fn get_repo_details(repo: &str) -> Result<Captures, String> {
 #[tokio::test]
 async fn test_main() {
     let start = Instant::now();
-    env::set_var(
-        "INPUT_REPO",
-        "https://github.com/jetstack/cert-manager,https://github.com/jetstack/google-cas-issuer,https://github.com/cert-manager/istio-csr,https://github.com/kubernetes-sigs/secrets-store-csi-driver",
-    );
-    env::set_var("INPUT_DAYS", "2");
+    env::set_var("INPUT_REPO", "https://github.com/jetstack/cert-manager,https://github.com/jetstack/google-cas-issuer,https://github.com/cert-manager/istio-csr,https://github.com/kubernetes-sigs/secrets-store-csi-driver");
+    env::set_var("INPUT_DAYS", "7");
     env::set_var("GITHUB_REPOSITORY", "maheshrayas/sample");
-    env::set_var("INPUT_GITHUB_TOKEN", "");
+    env::set_var(
+        "INPUT_GITHUB_TOKEN",
+        "",
+    );
     if let Err(_) = process().await {
         panic!("Failed",);
     }
     println!("Success");
     let duration = start.elapsed();
-    println!("Time elapsed in expensive_function() is: {:?}", duration);
+    println!("Time taken for execution is: {:?}", duration);
 }
