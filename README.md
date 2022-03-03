@@ -7,6 +7,7 @@
   <a href="https://github.com/maheshrayas/action-release-notifier/actions" alt="Build"><img src="https://github.com/maheshrayas/action-release-notifier/workflows/build/badge.svg" /></a>
   <a href="https://github.com/maheshrayas/action-release-notifier/actions/workflows/lint.yaml" alt="Lint"><img src="https://github.com/maheshrayas/action-release-notifier/actions/workflows/lint.yaml/badge.svg" /></a>
   <a href="https://github.com/maheshrayas/action-release-notifier/commits/main" alt="last commit"><img src="https://img.shields.io/github/last-commit/maheshrayas/action-release-notifier?color=purple" /></a>
+  <a alt="Action pulled"><img src="https://img.shields.io/docker/pulls/maheshrayas/release-notifier.svg" /></a>
 </div>
 
 ## Motivation
