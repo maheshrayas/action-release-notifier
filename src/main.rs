@@ -37,14 +37,36 @@ async fn process() -> Result<()> {
     Ok(m)
 }
 
+
+
 #[tokio::test]
-async fn test_main() {
+async fn test_gh() {
     use std::time::Instant;
     let start = Instant::now();
     let gh_token = &env::var("TOKEN").unwrap();
     env::set_var("INPUT_REPO", "https://github.com/maheshrayas/action-release-notifier,https://github.com/maheshrayas/action-pr-comment-delete,https://github.com/kubernetes/kubernetes");
     env::set_var("INPUT_DAYS", "4");
     env::set_var("GITHUB_REPOSITORY", "maheshrayas/action-release-notifier");
+    env::set_var("INPUT_TYPE", "Github");
+
+    env::set_var("INPUT_GITHUB_TOKEN", gh_token);
+    if let Err(_) = process().await {
+        panic!("Failed",);
+    }
+    let duration = start.elapsed();
+    println!("Time taken for execution is: {:?}", duration);
+}
+
+
+#[tokio::test]
+async fn test_rss() {
+    use std::time::Instant;
+    let start = Instant::now();
+    let gh_token = &env::var("TOKEN").unwrap();
+    env::set_var("INPUT_REPO", "https://cloud.google.com/feeds/anthosconfig-release-notes.xml");
+    env::set_var("INPUT_DAYS", "9");
+    env::set_var("GITHUB_REPOSITORY", "maheshrayas/action-release-notifier");
+    env::set_var("INPUT_TYPE", "Rss");
 
     env::set_var("INPUT_GITHUB_TOKEN", gh_token);
     if let Err(_) = process().await {
