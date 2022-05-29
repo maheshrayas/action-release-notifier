@@ -8,10 +8,12 @@ inputs:
     description: 'pass github repository'
   days:
     description: 'frequency of scan (must match the cron scheduler)'
+  type:
+    description: 'release type: Github or Rss'
 
 runs:
   using: 'docker'
-  image: 'docker://maheshrayas/release-notifier:1.0'
+  image: 'docker://maheshrayas/release-notifier:v2.0'
 branding:
   icon: 'zoom-in'
   color: 'purple'

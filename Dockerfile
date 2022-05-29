@@ -1,11 +1,9 @@
 FROM rust:latest AS builder
 
-RUN rustup target add x86_64-unknown-linux-musl
-RUN apt update && apt install -y musl-tools musl-dev
 RUN update-ca-certificates
 
 # Create appuser
-ENV USER=pr
+ENV USER=rel
 ENV UID=10001
 
 RUN adduser \
@@ -18,21 +16,28 @@ RUN adduser \
     "${USER}"
 
 
+WORKDIR /kube
+
 COPY src src
-COPY Cargo.toml Cargo.toml
-RUN cargo build --target x86_64-unknown-linux-musl --release
+COPY Cargo.toml Cargo.lock ./
 
-FROM scratch
+RUN cargo build --release
 
+####################################################################################################
+## Final image
+####################################################################################################
+FROM gcr.io/distroless/cc
+
+# Import from builder.
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
-WORKDIR /pr
+WORKDIR /kube
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# Copy our build
+COPY --from=builder /kube/target/release/release_notifier ./
 
-COPY --from=builder /target/x86_64-unknown-linux-musl/release/release_notifier ./
+# Use an unprivileged user.
+USER rel:rel
 
-USER pr:pr
-
-ENTRYPOINT [ "/pr/release_notifier" ]
+CMD ["/kube/release_notifier"]
