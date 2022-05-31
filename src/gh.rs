@@ -2,7 +2,8 @@ use anyhow::{anyhow, Result};
 use regex::{Captures, Regex};
 use reqwest::{header::HeaderMap, Client};
 use serde::Deserialize;
-use std::{collections::HashMap, env};
+use serde_json::{Map, Value};
+use std::env;
 use tracing::info;
 
 #[derive(Deserialize, Debug, Default)]
@@ -38,6 +39,7 @@ pub(crate) struct Issue<'a> {
     pub(crate) release_body: &'a str,
     pub(crate) repo_name: &'a str,
     pub(crate) release_version: &'a str,
+    pub(crate) labels: &'a Option<String>,
 }
 
 impl<'a> Issue<'a> {
@@ -48,6 +50,7 @@ impl<'a> Issue<'a> {
         release_body: &'a str,
         repo_name: &'a str,
         release_version: &'a str,
+        labels: &'a Option<String>,
     ) -> Self {
         Issue {
             headers,
@@ -56,42 +59,51 @@ impl<'a> Issue<'a> {
             release_body,
             repo_name,
             release_version,
+            labels,
         }
     }
 
     pub async fn create_issue(&self) -> Result<()> {
-        let mut map = HashMap::new();
+        let mut map = Map::new();
         let he = &self.headers.to_owned();
         let github_org: &str =
             &env::var("GITHUB_REPOSITORY").expect("Missing input parameter: repo");
         let current_repo: Vec<&str> = github_org.split('/').collect();
         map.insert(
-            "title",
-            format!(
+            "title".to_string(),
+            Value::String(format!(
                 "New version of {} {} available",
                 &self.repo_name, &self.release_version
-            ),
+            )),
         );
         map.insert(
-            "body",
-            format!(
+            "body".to_string(),
+            Value::String(format!(
                 " Upstream new release {} available at {} \n\n **Release Details:** \n {}",
                 &self.repo_name, &self.release_url, &self.release_body
-            ),
+            )),
         );
+
+        if let Some(labels) = &self.labels {
+            let m: Vec<Value> = labels
+                .split(',')
+                .map(|s| Value::String(s.to_string()))
+                .collect();
+            map.insert("labels".to_string(), Value::Array(m));
+        }
 
         let url = format!(
             "https://api.github.com/repos/{}/{}/issues",
             current_repo[0], current_repo[1]
         );
+
         let issue_response = self
             .client
             .post(url)
             .headers(he.to_owned())
-            .json(&map)
+            .json(&serde_json::json!(&map))
             .send()
             .await?;
-        println!("issue_response.status() {}", issue_response.status());
         if issue_response.status() == 201 {
             info!(
                 "Successfully issue created with details for repo: {}",

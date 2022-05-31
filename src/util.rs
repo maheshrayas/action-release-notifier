@@ -32,16 +32,18 @@ pub struct Input {
     pub input_type: InputType,
     pub repo: String,
     pub days: i64,
+    pub labels: Option<String>,
 }
 
 impl Input {
-    pub fn new(ty: String, token: String, repo: String, days: i64) -> Self {
+    pub fn new(ty: String, token: String, repo: String, days: i64, labels: Option<String>) -> Self {
         let input_type = InputType::from_str(&ty).unwrap();
         Input {
             input_type,
             token,
             repo,
             days,
+            labels,
         }
     }
 
@@ -98,6 +100,7 @@ impl Input {
                             &rbody.body,
                             parsed_repo,
                             &rbody.tag_name,
+                            &self.labels,
                         );
                         issue.create_issue().await?;
                         info!("New release found and github issue created");
@@ -160,6 +163,7 @@ impl Input {
                     &body,
                     &title,
                     "",
+                    &self.labels,
                 );
                 issue.create_issue().await?
             } else {

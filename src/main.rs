@@ -27,8 +27,13 @@ async fn process() -> Result<()> {
     );
     let input_type = env::var("INPUT_TYPE").expect("Missing input parameter: type");
 
+    let labels: Option<String> = match env::var("INPUT_LABELS") {
+        Ok(labels) => Some(labels),
+        Err(_) => None,
+    };
+
     // intialize the struct
-    let input = Input::new(input_type, token, repo, days);
+    let input = Input::new(input_type, token, repo, days, labels);
 
     let m = match input.input_type {
         InputType::Github => input.gh().await?,
@@ -36,8 +41,6 @@ async fn process() -> Result<()> {
     };
     Ok(m)
 }
-
-
 
 #[tokio::test]
 async fn test_gh() {
@@ -48,7 +51,7 @@ async fn test_gh() {
     // env::set_var("INPUT_DAYS", "4");
     env::set_var("GITHUB_REPOSITORY", "maheshrayas/action-release-notifier");
     env::set_var("INPUT_TYPE", "Github");
-
+    env::set_var("INPUT_LABELS", "release,google");
     env::set_var("INPUT_GITHUB_TOKEN", gh_token);
     if let Err(_) = process().await {
         panic!("Failed",);
@@ -57,17 +60,19 @@ async fn test_gh() {
     println!("Time taken for execution is: {:?}", duration);
 }
 
-
 #[tokio::test]
 async fn test_rss() {
     use std::time::Instant;
     let start = Instant::now();
     let gh_token = &env::var("TOKEN").unwrap();
-    env::set_var("INPUT_REPO", "https://cloud.google.com/feeds/anthosconfig-release-notes.xml");
+    env::set_var(
+        "INPUT_REPO",
+        "https://cloud.google.com/feeds/anthosconfig-release-notes.xml",
+    );
     // env::set_var("INPUT_DAYS", "9");
     env::set_var("GITHUB_REPOSITORY", "maheshrayas/action-release-notifier");
     env::set_var("INPUT_TYPE", "Rss");
-
+    env::set_var("INPUT_DAYS", "7");
     env::set_var("INPUT_GITHUB_TOKEN", gh_token);
     if let Err(_) = process().await {
         panic!("Failed",);

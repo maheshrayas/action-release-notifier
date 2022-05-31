@@ -30,20 +30,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: release-notifier-gh
-        uses: maheshrayas/action-release-notifier@v2.0
+        uses: maheshrayas/action-release-notifier@v2.1
         with:
           github_token: '${{ secrets.GITHUB_TOKEN }}'
           type: Github
           repo: 'https://github.com/kubernetes/kubernetes,https://github.com/kubernetes-sigs/kustomize,https://github.com/helm/helm,https://github.com/istio/istio'
           days: 1 #optional field, default 1 day, , make sure you set the cron appropriately, Example if you want to check for release once in 7 days, set days: 7 and cron schedule to run once in 7 days
+          labels: 'release'
 
       - name: release-notifier-rss
-        uses: maheshrayas/action-release-notifier@v2.0
+        uses: maheshrayas/action-release-notifier@v2.1
         with:
           github_token: '${{ secrets.GITHUB_TOKEN }}'
           type: Rss
           repo: 'https://cloud.google.com/feeds/anthosconfig-release-notes.xml'
           days: 1 #optional field, default 1 day, , make sure you set the cron appropriately, Example if you want to check for release once in 7 days, set days: 7 and cron schedule to run once in 7 days
+          labels: 'release,google'
 ```
 
 ## Notification

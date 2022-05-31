@@ -13,10 +13,12 @@ inputs:
   type:
     description: 'release type: Github or Rss'
     required: true
+  labels:
+    description: 'add desired label to GH Issue'
 
 runs:
   using: 'docker'
-  image: 'docker://maheshrayas/release-notifier:v2.0'
+  image: 'docker://maheshrayas/release-notifier:v2.1'
 branding:
   icon: 'zoom-in'
   color: 'purple'
