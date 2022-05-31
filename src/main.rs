@@ -17,10 +17,10 @@ async fn main() -> Result<()> {
 
 async fn process() -> Result<()> {
     let repo: String = env::var("INPUT_REPO").expect("Missing input parameter: repo");
-    let days: i64 = env::var("INPUT_DAYS")
-        .unwrap_or_else(|_| 1.to_string())
-        .parse::<i64>()
-        .unwrap();
+    let days: i64 = match env::var("INPUT_DAYS") {
+        Ok(days) => days.parse::<i64>().unwrap(),
+        Err(_) => 1,
+    };
     let token = format!(
         "token {}",
         env::var("INPUT_GITHUB_TOKEN").expect("Missing input parameter: github_token")
@@ -45,7 +45,7 @@ async fn test_gh() {
     let start = Instant::now();
     let gh_token = &env::var("TOKEN").unwrap();
     env::set_var("INPUT_REPO", "https://github.com/maheshrayas/action-release-notifier,https://github.com/maheshrayas/action-pr-comment-delete,https://github.com/kubernetes/kubernetes");
-    env::set_var("INPUT_DAYS", "4");
+    // env::set_var("INPUT_DAYS", "4");
     env::set_var("GITHUB_REPOSITORY", "maheshrayas/action-release-notifier");
     env::set_var("INPUT_TYPE", "Github");
 
@@ -64,7 +64,7 @@ async fn test_rss() {
     let start = Instant::now();
     let gh_token = &env::var("TOKEN").unwrap();
     env::set_var("INPUT_REPO", "https://cloud.google.com/feeds/anthosconfig-release-notes.xml");
-    env::set_var("INPUT_DAYS", "9");
+    // env::set_var("INPUT_DAYS", "9");
     env::set_var("GITHUB_REPOSITORY", "maheshrayas/action-release-notifier");
     env::set_var("INPUT_TYPE", "Rss");
 

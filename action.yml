@@ -5,11 +5,13 @@ inputs:
   github_token:
     description: 'GITHUB_TOKEN.'
   repo:
-    description: 'pass github repository'
+    description: 'pass github repository or rss feed url'
+    required: true
   days:
     description: 'frequency of scan (must match the cron scheduler)'
   type:
     description: 'release type: Github or Rss'
+    required: true
 
 runs:
   using: 'docker'
