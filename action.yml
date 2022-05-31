@@ -9,6 +9,7 @@ inputs:
     required: true
   days:
     description: 'frequency of scan (must match the cron scheduler)'
+    default: 1
   type:
     description: 'release type: Github or Rss'
     required: true

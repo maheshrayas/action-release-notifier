@@ -17,7 +17,7 @@ Since most of applications these days rely on upstream opensource Github Project
 ## Configuration in GHA workflow
 
 ```bash
-name: Release Notifier
+name: release-notifier
 
 on:
   workflow_dispatch: null
@@ -29,11 +29,20 @@ jobs:
   clean:
     runs-on: ubuntu-latest
     steps:
-      - name: release-notifier
-        uses: maheshrayas/action-release-notifier@v1
+      - name: release-notifier-gh
+        uses: maheshrayas/action-release-notifier@v2.0
         with:
           github_token: '${{ secrets.GITHUB_TOKEN }}'
-          repo: 'https://github.com/kubernetes/kubernetes,https://github.com/kubernetes-sigs/kustomize,https://github.com/helm/helm,https://github.com/istio/istio' #examples
+          type: Github
+          repo: 'https://github.com/kubernetes/kubernetes,https://github.com/kubernetes-sigs/kustomize,https://github.com/helm/helm,https://github.com/istio/istio'
+          days: 1 #optional field, default 1 day, , make sure you set the cron appropriately, Example if you want to check for release once in 7 days, set days: 7 and cron schedule to run once in 7 days
+
+      - name: release-notifier-rss
+        uses: maheshrayas/action-release-notifier@v2.0
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          type: Rss
+          repo: 'https://cloud.google.com/feeds/anthosconfig-release-notes.xml'
           days: 1 #optional field, default 1 day, , make sure you set the cron appropriately, Example if you want to check for release once in 7 days, set days: 7 and cron schedule to run once in 7 days
 ```
 
